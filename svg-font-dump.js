@@ -68,121 +68,110 @@ var args = parser.parseArgs(),
 
 function font_dump(params, callback) {
 
-    fs.readFile(params.src_font, function(err, data) {
+  fs.readFile(params.src_font, function(err, data) {
+    if (err) {
+        throw err;
+    }
 
-        if (err) {
-            throw err;
+    data = data.toString();
+
+    var result = [],
+        path,
+        width,
+        height,
+        scale,
+        fontHorizAdvX,
+        ascent,
+        descent,
+        unicode,
+        name,
+        transform,
+        glyphSize = 1000,
+        parser = sax.parser(true/* strict */, {
+            trim: true,
+            normalize: true,
+            lowercase: true,
+            xmlns: true,
+            position: false
+        });
+
+    parser.onopentag = function(node) {
+      if (Object.keys(node.attributes).length) {
+        // get horiz-adv-x from <font>
+        if (node.name === 'font' && node.attributes['horiz-adv-x']) {
+            fontHorizAdvX = node.attributes['horiz-adv-x'].value;
         }
 
-        data = data.toString();
+        // get ascent from <font-face>
+        if (node.name === 'font-face' && node.attributes.ascent) {
+            ascent = +node.attributes.ascent.value;
+        }
 
-        var result = [],
-            path,
-            width,
-            height,
-            scale,
-            fontHorizAdvX,
-            ascent,
-            descent,
-            unicode,
-            name,
-            transform,
-            glyphSize = 1000,
-            parser = sax.parser(true/* strict */, {
-                trim: true,
-                normalize: true,
-                lowercase: true,
-                xmlns: true,
-                position: false
-            });
+        // get descent from <font-face>
+        if (node.name === 'font-face' && node.attributes.descent) {
+            descent = -node.attributes.descent.value;
+        }
 
-        parser.onopentag = function(node) {
+        // each <glyph>
+        if (node.name === 'glyph' && node.attributes.d) {
+          // path
+          path = node.attributes.d.value;
 
-            if (Object.keys(node.attributes).length) {
+          // width
+          width = node.attributes['horiz-adv-x'] ?
+                      node.attributes['horiz-adv-x'].value :
+                      fontHorizAdvX;
 
-                // get horiz-adv-x from <font>
-                if (node.name === 'font' && node.attributes['horiz-adv-x']) {
-                    fontHorizAdvX = node.attributes['horiz-adv-x'].value;
-                }
+          // height
+          height = ascent + descent;
 
-                // get ascent from <font-face>
-                if (node.name === 'font-face' && node.attributes.ascent) {
-                    ascent = +node.attributes.ascent.value;
-                }
+          // scale
+          scale = glyphSize / height;
 
-                // get descent from <font-face>
-                if (node.name === 'font-face' && node.attributes.descent) {
-                    descent = -node.attributes.descent.value;
-                }
+          // unicode
+          if (!node.attributes.unicode) return;
 
-                // each <glyph>
-                if (node.name === 'glyph' && node.attributes.d) {
+          // patch glyph codes spelling
+          unicode = node.attributes.unicode.value.replace(/unicode="&#x([a-f0-9]+);"/g, 'unicode="0x$1"');
 
-                    // path
-                    path = node.attributes.d.value;
+          // if 1 char -> direct definition
+          unicode = unicode.length === 1 ?
+                      unicode.charCodeAt(0) :
+                      parseInt(unicode, 16);
 
-                    // width
-                    width = node.attributes['horiz-adv-x'] ?
-                                node.attributes['horiz-adv-x'].value :
-                                fontHorizAdvX;
+          // name
+          name = node.attributes['glyph-name'] ?
+                      node.attributes['glyph-name'].value :
+                      unicode.toString(16);
 
-                    // height
-                    height = ascent + descent;
+          // vertical mirror
+          transform = 'translate(0 ' + (glyphSize / 2) + ') scale(1 -1) translate(0 ' + (-glyphSize / 2) + ')';
+          // scale
+          transform += ' scale(' + scale + ')';
+          // descent shift
+          transform += ' translate(0 ' + descent + ')';
 
-                    // scale
-                    scale = glyphSize / height;
+          width = width * scale;
+          height = height * scale;
 
-                    // unicode
-                    if (!node.attributes.unicode) return;
+          result.push({
+            path: path,
+            transform: transform,
+            unicode: unicode,
+            name: name,
+            width: width,
+            height: height
+          });
+        }
+      }
+    };
 
-                    // patch glyph codes spelling
-                    unicode = node.attributes.unicode.value.replace(/unicode="&#x([a-f0-9]+);"/g, 'unicode="0x$1"');
+    parser.onend = function() {
+        callback(result);
+    };
 
-                    // if 1 char -> direct definition
-                    unicode = unicode.length === 1 ?
-                                unicode.charCodeAt(0) :
-                                parseInt(unicode, 16);
-
-                    // name
-                    name = node.attributes['glyph-name'] ?
-                                node.attributes['glyph-name'].value :
-                                unicode.toString(16);
-
-                    // vertical mirror
-                    transform = 'translate(0 ' + (glyphSize / 2) + ') scale(1 -1) translate(0 ' + (-glyphSize / 2) + ')';
-                    // scale
-                    transform += ' scale(' + scale + ')';
-                    // descent shift
-                    transform += ' translate(0 ' + descent + ')';
-
-                    width = width * scale;
-                    height = height * scale;
-
-                    result.push({
-                        path: path,
-                        transform: transform,
-                        unicode: unicode,
-                        name: name,
-                        width: width,
-                        height: height
-                    });
-
-                }
-
-            }
-
-        };
-
-        parser.onend = function() {
-
-            callback(result);
-
-        };
-
-        parser.write(data).close();
-
-    });
-
+    parser.write(data).close();
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +182,7 @@ font_dump(params, function(glyphs) {
       diff = [];
 
   if (args.config) {
-    config = yaml.load(args.config);
+    config = require(args.config);
   }
 
   console.log('Writing output:\n\n');
@@ -207,7 +196,7 @@ font_dump(params, function(glyphs) {
     if (config) {
       exists = _.find(config.glyphs, function(element) {
         //console.log('---' + element.from + '---' + glyph.unicode)
-        return (element.from || element.code) == glyph.unicode;
+        return (element.from || element.code) === glyph.unicode;
       });
 
       if (exists && !args.force) {
@@ -224,6 +213,7 @@ font_dump(params, function(glyphs) {
 
     if (exists) {
       // glyph exists in config, but we forced dump
+
       fs.writeFileSync(path.join(params.glyphs_dir, (exists.file || exists.css) + '.svg'), glyph.svg);
       console.log((glyph.unicode.toString(16)) + ' - Found, but override forced');
       return;
