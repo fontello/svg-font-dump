@@ -1,0 +1,18 @@
+{
+  "name"            : "svf-font-dump",
+  "description"     : "Split SVG font to separate images",
+  "keywords"        : [ "font", "svg" ],
+  "version"         : "0.0.1",
+  "repository"      : {
+                        "type": "git",
+                        "url" : "git@github.com:fontello/svg-font-dump.git"
+                      },
+  "bin"             : { "svg-font-dump": "svg-font-dump.js" },
+  "dependencies"    : {
+                        "argparse"          : "~ 0.1.7",
+                        "fs-tools"          : "~ 0.2.6",
+                        "js-yaml"           : "~ 2.0.5",
+                        "lodash"            : "~ 1.2.1",
+                        "sax"               : "~ 0.5.2"
+                      }
+}
