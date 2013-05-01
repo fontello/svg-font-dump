@@ -1,5 +1,5 @@
 {
-  "name"            : "svf-font-dump",
+  "name"            : "svg-font-dump",
   "description"     : "Split SVG font to separate images",
   "keywords"        : [ "font", "svg" ],
   "version"         : "0.0.1",
