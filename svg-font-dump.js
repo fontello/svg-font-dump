@@ -61,7 +61,7 @@ var args = parser.parseArgs();
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function font_dump(data, callback) {
+function font_dump(data) {
 
   var result = []
     , fontHorizAdvX
@@ -121,7 +121,7 @@ function font_dump(data, callback) {
       height: height
     });
   });
-  
+
   return result;
 }
 
@@ -138,9 +138,9 @@ try {
 }
 
 try {
-  config = yaml.load(fs.readFileSync(args.config, 'utf-8'));  
+  config = yaml.load(fs.readFileSync(args.config, 'utf-8'));
 } catch (e) {
-  console.error('Can\'t read config file ' + args.config);  
+  console.error('Can\'t read config file ' + args.config);
   process.exit(1);
 }
 
