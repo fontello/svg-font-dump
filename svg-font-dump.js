@@ -164,8 +164,11 @@ glyphs.forEach(function(glyph) {
     }
   }
 
+  // Fix for FontForge: need space between old and new polyline
+  glyph.d = glyph.d.replace(/zm/g, 'z m');
+
   glyph.svg = svg_template({
-    d         :glyph.d,
+    d         : glyph.d,
     transform : glyph.transform,
     width     : glyph.width,
     height    : glyph.height
