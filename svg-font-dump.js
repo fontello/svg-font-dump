@@ -10,11 +10,11 @@ var yaml    = require('js-yaml');
 var DOMParser      = require('xmldom').DOMParser;
 var ArgumentParser = require('argparse').ArgumentParser;
 
-var svg_template =
-    '<svg height="${height}px" width="${width}px"' +
-    ' xmlns="http://www.w3.org/2000/svg">' + "\n" +
-    '  <path d="${path}" transform="${transform}" />' + "\n" +
-    '</svg>';
+var svg_template = _.template(
+    '<svg height="<%= height %>" width="<%= width %>" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="<%= path %>" transform="<%= transform %>"/>' +
+    '</svg>'
+  );
 
 
 var parser = new ArgumentParser({
@@ -164,11 +164,12 @@ glyphs.forEach(function(glyph) {
     }
   }
 
-  glyph.svg = svg_template
-    .replace('${path}', glyph.path)
-    .replace('${transform}', glyph.transform)
-    .replace('${width}', glyph.width)
-    .replace('${height}', glyph.height);
+  glyph.svg = svg_template({
+    path :glyph.path,
+    transform : glyph.transform,
+    width : glyph.width,
+    height : glyph.height
+  });
 
   if (exists) {
     // glyph exists in config, but we forced dump
