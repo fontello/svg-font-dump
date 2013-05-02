@@ -12,7 +12,7 @@ var ArgumentParser = require('argparse').ArgumentParser;
 
 var svg_template = _.template(
     '<svg height="<%= height %>" width="<%= width %>" xmlns="http://www.w3.org/2000/svg">' +
-    '<path d="<%= path %>" transform="<%= transform %>"/>' +
+    '<path d="<%= d %>"<% if (transform) { %> transform="<%= transform %>"<% } %>/>' +
     '</svg>'
   );
 
@@ -82,7 +82,7 @@ function font_dump(data) {
   descent       = -fontFace.getAttribute('descent');
 
   _.each(font.getElementsByTagName('glyph'), function(glyph) {
-    var path = glyph.getAttribute('d');
+    var d = glyph.getAttribute('d');
 
     var unicode = glyph.getAttribute('unicode');
 
@@ -113,7 +113,7 @@ function font_dump(data) {
     height = height * scale;
 
     result.push({
-      path: path,
+      d: d,
       transform: transform,
       unicode: unicode,
       name: name,
@@ -165,10 +165,10 @@ glyphs.forEach(function(glyph) {
   }
 
   glyph.svg = svg_template({
-    path :glyph.path,
+    d         :glyph.d,
     transform : glyph.transform,
-    width : glyph.width,
-    height : glyph.height
+    width     : glyph.width,
+    height    : glyph.height
   });
 
   if (exists) {
