@@ -82,11 +82,14 @@ function font_dump(data) {
   descent       = -fontFace.getAttribute('descent');
 
   _.each(font.getElementsByTagName('glyph'), function(glyph) {
+    
+    // Ignore empty glyphs (with empty code or path)
+    if (!glyph.hasAttribute('d')) { return; }
+    if (!glyph.hasAttribute('unicode')) { return; }
+    
     var d = glyph.getAttribute('d');
-
+    
     var unicode = glyph.getAttribute('unicode');
-
-    if (!unicode) { return; }
 
     unicode = unicode.length === 1 ? unicode.charCodeAt(0) : unicode;
 
