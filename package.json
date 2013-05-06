@@ -2,7 +2,7 @@
   "name"            : "svg-font-dump",
   "description"     : "Split SVG font to separate images",
   "keywords"        : [ "font", "svg" ],
-  "version"         : "0.0.6",
+  "version"         : "0.0.7",
   "repository"      : {
                         "type": "git",
                         "url" : "git@github.com:fontello/svg-font-dump.git"
