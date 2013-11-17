@@ -263,12 +263,6 @@ if (args.diff_config) {
 
   fs.writeFileSync(
     args.diff_config,
-    yaml.dump(
-      { glyphs: diff },
-      {
-        flowLevel: 3,
-        styles: { '!!int': 'hexadecimal' }
-      }
-    )
+    yaml.dump({ glyphs: diff }, { flowLevel: 3, styles: { '!!int': 'hexadecimal' } })
   );
 }
