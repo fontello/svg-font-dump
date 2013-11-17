@@ -8,8 +8,8 @@ var crypto  = require('crypto');
 var _       = require('lodash');
 var yaml    = require('js-yaml');
 var SvgPath = require('svgpath');
-var DOMParser      = require('xmldom').DOMParser;
-var ArgumentParser = require('argparse').ArgumentParser;
+var XMLDOMParser    = require('xmldom').DOMParser;
+var ArgumentParser  = require('argparse').ArgumentParser;
 
 var svg_template = _.template(
     '<svg height="<%= height %>" width="<%= width %>" xmlns="http://www.w3.org/2000/svg">' +
@@ -72,66 +72,46 @@ function fixedCharCodeAt(chr) {
 //
 function load_svg_data(data) {
 
-  var result = []
-    , fontHorizAdvX
-    , ascent
-    , descent
+  var result = [];
 
-    , glyphSize = 1000
+  var xmlDoc = (new XMLDOMParser()).parseFromString(data, "application/xml");
 
-    , doc;
+  var svgFont = xmlDoc.getElementsByTagName('font')[0];
+  var svgFontface = xmlDoc.getElementsByTagName('font-face')[0];
+  var svgGlyps = xmlDoc.getElementsByTagName('glyph');
 
-  doc = (new DOMParser()).parseFromString(data, "application/xml");
+  var fontHorizAdvX = svgFont.getAttribute('horiz-adv-x');
+  var fontAscent = svgFontface.getAttribute('ascent');
+  var fontUnitsPerEm = svgFontface.getAttribute('units-per-em') || 1000;
 
-  var font = doc.getElementsByTagName('font')[0];
-  var fontFace = font.getElementsByTagName('font-face')[0];
+  var scale = 1000 / fontUnitsPerEm;
 
-  fontHorizAdvX = +font.getAttribute('horiz-adv-x');
-  ascent        = +fontFace.getAttribute('ascent');
-  descent       = -fontFace.getAttribute('descent');
+  _.each(svgGlyps, function (svgGlyph) {
+    var d = svgGlyph.getAttribute('d');
 
-  _.each(font.getElementsByTagName('glyph'), function(glyph) {
+    // FIXME
+    // Now just ignore glyphs without image, however
+    // that can be space. Does anyone needs it?
+    if (!d) { return; }
 
-    // Ignore empty glyphs (with empty code or path)
-    if (!glyph.hasAttribute('d')) { return; }
-    if (!glyph.hasAttribute('unicode')) { return; }
-
-    var d = glyph.getAttribute('d');
-
-    var unicode = glyph.getAttribute('unicode');
-
-    var name = glyph.getAttribute('glyph-name') || ('glyph' + unicode);
-
-    //
-    // Rescale & Transform from scg fomt to svg image coordinates
-    // !!! Transforms go in back order !!!
-    //
-
-    var width = glyph.getAttribute('horiz-adv-x') || fontHorizAdvX;
-    var height = ascent + descent;
-    var scale = glyphSize / height;
-
-    // vertical mirror
-    var transform = 'translate(0 ' + (glyphSize / 2) + ') scale(1 -1) translate(0 ' + (-glyphSize / 2) + ')';
-
-    if (scale !== 1) {
-      // scale size, only when needed
-      transform += ' scale(' + scale + ')';
-      // recalculate width & height
-      width = width * scale;
-      height = height * scale;
-    }
-    // descent shift
-    transform += ' translate(0 ' + descent + ')';
-
+    var unicode = svgGlyph.getAttribute('unicode');
+    var name = svgGlyph.getAttribute('glyph-name') || ('glyph' + unicode);
+    var width = svgGlyph.getAttribute('horiz-adv-x') || fontHorizAdvX;
 
     result.push({
-      d: d,
-      transform: transform,
+      d: new SvgPath(d)
+              .translate(0, -fontAscent)
+              .scale(scale, -scale)
+              .abs()
+              .round(1)
+              .rel()
+              .round(1)
+              .toString(),
+
       unicode: unicode,
       name: name,
-      width: width,
-      height: height
+      width: (width*scale).toFixed(1),
+      height: 1000
     });
   });
 
@@ -144,9 +124,6 @@ function load_svg_data(data) {
 function load_fontello_data(data) {
 
   var result = [];
-
-  var fontUnitsPerEm = data.units_per_em || 1000;
-  var fontAscent = data.ascent || 850;
 
   _.each(data.glyphs, function (glyph) {
 
