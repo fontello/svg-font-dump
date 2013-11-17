@@ -4,6 +4,7 @@
 * Added fontello configs dumping
 * Removed error when CONFIG option not set
 * Update path coords instead of adding `transform` attribute
+* Removed quotes for glyph codes in diff dump
 
 
 Previous / ...
