@@ -13,7 +13,7 @@ var ArgumentParser  = require('argparse').ArgumentParser;
 
 var svg_template = _.template(
     '<svg height="<%= height %>" width="<%= width %>" xmlns="http://www.w3.org/2000/svg">' +
-    '<path d="<%= d %>"<% if (transform) { %> transform="<%= transform %>"<% } %>/>' +
+    '<path d="<%= d %>" />' +
     '</svg>'
   );
 
@@ -212,7 +212,6 @@ glyphs.forEach(function(glyph) {
 
   glyph.svg = svg_template({
     d         : glyph.d,
-    transform : glyph.transform,
     width     : glyph.width,
     height    : glyph.height
   });
@@ -229,7 +228,7 @@ glyphs.forEach(function(glyph) {
 
   glyph_out = {
     css: glyph.name,
-    code: '0x' + glyph.unicode.toString(16),
+    code: glyph.unicode,
     uid: glyph.uid || crypto.randomBytes(16).toString('hex'),
     search: glyph.search || []
   };
@@ -262,5 +261,14 @@ if (args.diff_config) {
     return;
   }
 
-  fs.writeFileSync(args.diff_config, yaml.dump({ glyphs: diff }, { flowLevel: 3 }));
+  fs.writeFileSync(
+    args.diff_config,
+    yaml.dump(
+      { glyphs: diff },
+      {
+        flowLevel: 3,
+        styles: { '!!int': 'hexadecimal' }
+      }
+    )
+  );
 }
