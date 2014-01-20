@@ -1,7 +1,7 @@
 SVG font dumper
 ===============
 
-This tool is user to dump SVG font into separate images.
+This tool is used to dump SVG font into separate images.
 
 Installation:
 
