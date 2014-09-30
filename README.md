@@ -3,8 +3,7 @@ SVG font dumper
 
 This tool is used to dump SVG font into separate images.
 
-~ sometimes you may be feeling a bit blue, then you realize 
-all you needed was a good dump.
+
 
 Installation:
 
