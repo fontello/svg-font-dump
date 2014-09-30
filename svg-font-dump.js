@@ -9,7 +9,7 @@ var _       = require('lodash');
 var yaml    = require('js-yaml');
 var SvgPath = require('svgpath');
 var XMLDOMParser    = require('xmldom').DOMParser;
-var ArgumentParser  = require('argparse').ArgumentParser;
+
 
 var svg_template = _.template(
     '<svg height="<%= height %>" width="<%= width %>" xmlns="http://www.w3.org/2000/svg">' +
@@ -17,6 +17,16 @@ var svg_template = _.template(
     '</svg>'
   );
 
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+if(require.main!=module){/*Use as a module*/module.exports={DumpSVG:DumpSVG}
+}else{/*Use from the command line*/ 
+var ArgumentParser  = require('argparse').ArgumentParser;
 
 var parser = new ArgumentParser({
   version: require('./package.json').version,
@@ -29,10 +39,14 @@ parser.addArgument([ '-o', '--glyphs_dir' ], { help: 'Glyphs output folder', req
 parser.addArgument([ '-d', '--diff_config' ], { help: 'Difference config output file' });
 parser.addArgument([ '-f', '--force' ], { help: 'Force override glyphs from config', action: 'storeTrue'});
 parser.addArgument([ '-n', '--names' ], { help: 'Try to guess new glyphs names', action: 'storeTrue'});
+parser.addArgument([ '-x', '--numeric_names' ], { help: 'If truthy 1|true|yes|etc use Unicode number as the output filenames.svg' });
 
 var args = parser.parseArgs();
+DumpSVG(args)
+}
 
 
+////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 // Int to char, with fix for big numbers
@@ -154,9 +168,21 @@ function load_fontello_data(data) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+function MakeDirectory(fp){/*Check or make a folder/folders. Input a path with forward slashes only, ending in "/". Returns the path or an empty string if it fails.*/fp=''+fp;var fp0=fp.replace(/\x5c/g,'/');try{if(fs.statSync(fp0).isDirectory()){return fp0}}catch(er){}var p=fp.indexOf('\\');var q=fp.indexOf('/',Math.max(3,p));var fp1=fp.substr(0,q).replace(/\x5c/g,'/');if(!fp1){return ''}var fp2=fp1+'\\'+fp.substr(Math.max(p,q)+1);var fp3=fp1.replace(/\x5c/g,'/');try{if(fs.statSync(fp3).isDirectory()){return MakeDirectory(fp2)}}catch(er){}try{fs.mkdirSync(fp3,process.umask())}catch(er){return ''}return MakeDirectory(fp2)}
 
 
+function DumpSVG(args){
+//just wrapped the remainder of the code in this function for module.exports
 var data, config, diff = [];
+if(args.i){args.src_font=args.i} // i/o seem appropriate property names Input/Output
+if(args.o){args.glyphs_dir=args.o} //that match -i, -o for the CLI ~ use them if they are present on args
+if(args.x){args.numeric_names=args.x} //added numeric_names option here and to the CLI options above
+/*trim leading|trailing whitespace, push all slashes forward, ensure path ends with "/" */ 
+var fp=(args.glyphs_dir.replace(/^\s+|\s+$/g,'').replace(/\x5c/g,'/')+'/').replace(/\x2f{2}$/,'/')
+/*MakeDirectory checks folder exists, or tries to  make that directory tree if it does not*/
+if(!MakeDirectory(fp)){console.log('Unable to find or make Output folder (-o). Check -o path and retry:'+fp);process.exit()}
+
+
 
 try {
   data = fs.readFileSync(args.src_font, 'utf-8');
@@ -218,7 +244,7 @@ glyphs.forEach(function(glyph) {
 
   if (exists) {
     // glyph exists in config, but we forced dump
-
+// not sure if args.numeric_names  needs to go here as well
     fs.writeFileSync(path.join(args.glyphs_dir, (exists.file || exists.css) + '.svg'), glyph.svg);
     console.log((glyph.unicode.toString(16)) + ' - Found, but override forced');
     return;
@@ -233,7 +259,7 @@ glyphs.forEach(function(glyph) {
     search: glyph.search || []
   };
 
-  console.log((glyph.unicode.toString(16)) + ' - NEW glyph, writing...');
+  
 
   var filename;
 
@@ -247,7 +273,13 @@ glyphs.forEach(function(glyph) {
     }
   }
 
-  fs.writeFile(path.join(args.glyphs_dir, filename), glyph.svg);
+if(args.numeric_names){filename=glyph.unicode+'.svg'} 
+//use numeric_names, as set in args={x:1|numeric_names:true} or "-x yes" CLI option above
+// moved log here, just wanted to see output paths
+var SaveAs=path.join(args.glyphs_dir, filename)
+console.log((glyph.unicode.toString(16)) + ' - NEW glyph, writing ~ '+SaveAs);
+
+  fs.writeFile(SaveAs, glyph.svg);
 
   diff.push(glyph_out);
 
@@ -265,4 +297,7 @@ if (args.diff_config) {
     args.diff_config,
     yaml.dump({ glyphs: diff }, { flowLevel: 3, styles: { '!!int': 'hexadecimal' } })
   );
+}
+
+
 }
