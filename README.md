@@ -43,7 +43,9 @@ svgFontDump({
   font: path.resolve('./my-svg-font.svg'),
   outputDir: path.resolve('./svg-font-dump'),
   name: true
-});
+})
+ .then(() => { console.log('Icons seperated'); })
+ .catch((e) => { console.error(e); });
 ```
 
 Authors
