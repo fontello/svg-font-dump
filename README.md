@@ -40,8 +40,8 @@ const path = require('path');
 const svgFontDump = require('svg-font-dump');
 
 svgFontDump({
-  config: path.resolve('./my-svg-font.svg'),
-  glyphsDir: path.resolve('./svg-font-dump'),
+  font: path.resolve('./my-svg-font.svg'),
+  outputDir: path.resolve('./svg-font-dump'),
   name: true
 });
 ```
