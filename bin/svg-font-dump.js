@@ -4,10 +4,11 @@
 
 const ArgumentParser = require('argparse').ArgumentParser;
 
-const svgFontDump = require('../index');
+const pkg = require('../package.json');
+const svgFontDump = require('../lib/svgFontDump');
 
 const parser = new ArgumentParser({
-  version: require('./package.json').version,
+  version: pkg.version,
   addHelp: true,
   description: 'Dump SVG font to separate glyphs'
 });
@@ -20,4 +21,10 @@ parser.addArgument([ '-n', '--names' ], { help: 'Try to guess new glyphs names',
 
 const args = parser.parseArgs();
 
-svgFontDump(args);
+svgFontDump(args)
+  .then(() => {
+    process.exit(0);
+  }, (err) => {
+    console.error(err.message);
+    process.exit(1);
+  });

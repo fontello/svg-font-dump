@@ -10,17 +10,20 @@
     "type": "git",
     "url": "git@github.com:fontello/svg-font-dump.git"
   },
-  "main": "index.js",
+  "main": "./lib/svgFontDump.js",
   "bin": {
-    "svg-font-dump": "bin/svg-font-dump.js"
+    "svg-font-dump": "./bin/svg-font-dump.js"
   },
   "scripts": {
     "lint": "semistandard --fix"
   },
   "dependencies": {
     "argparse": "~ 0.1.7",
+    "co": "4.6.0",
     "fs-tools": "~ 0.2.6",
     "js-yaml": "~ 2.0.5",
+    "mkdirp-then": "1.2.0",
+    "mz": "2.6.0",
     "svgpath": "~ 1.0.1",
     "xmldom": "~ 0.1.5"
   },

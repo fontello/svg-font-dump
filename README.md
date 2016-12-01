@@ -18,7 +18,7 @@ svg-font-dump -i ./my-svg-font.svg -o ./svg-font-dump -n
 Options
 -------
 - `-i`, `--src_font` - Source font path **required**
-- `-o`, `--glyphs_dir` - Glyphs output folder **required**
+- `-o`, `--glyphs_dir` - Glyphs output folder **required**, create folder if doesn't exist
 - `-c`, `--config` - Font config file
 - `-d`, `--diff_config` - Difference config output file
 - `-f`, `--force` - Force override glyphs from config
