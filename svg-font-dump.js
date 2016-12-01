@@ -2,24 +2,24 @@
 
 'use strict';
 
-var fs = require('fs');
-var path = require('path');
-var crypto = require('crypto');
-var _ = require('lodash');
-var yaml = require('js-yaml');
-var ArgumentParser = require('argparse').ArgumentParser;
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const _ = require('lodash');
+const yaml = require('js-yaml');
+const ArgumentParser = require('argparse').ArgumentParser;
 
 const fixedCharCodeAt = require('./lib/utils/fixedCharCodeAt');
 const loadSvgData = require('./lib/utils/loadSvgData');
 const loadFontelloData = require('./lib/utils/loadFontelloData');
 
-var svgTemplate = _.template(
+const svgTemplate = _.template(
     '<svg height="<%= height %>" width="<%= width %>" xmlns="http://www.w3.org/2000/svg">' +
     '<path d="<%= d %>" />' +
     '</svg>'
   );
 
-var parser = new ArgumentParser({
+const parser = new ArgumentParser({
   version: require('./package.json').version,
   addHelp: true,
   description: 'Dump SVG font to separate glyphs'
@@ -31,11 +31,11 @@ parser.addArgument([ '-d', '--diff_config' ], { help: 'Difference config output 
 parser.addArgument([ '-f', '--force' ], { help: 'Force override glyphs from config', action: 'storeTrue' });
 parser.addArgument([ '-n', '--names' ], { help: 'Try to guess new glyphs names', action: 'storeTrue' });
 
-var args = parser.parseArgs();
+const args = parser.parseArgs();
 
-var data = null;
-var config = null;
-var diff = [];
+let data = null;
+let config = null;
+const diff = [];
 
 try {
   data = fs.readFileSync(args.src_font, 'utf-8');
@@ -55,7 +55,7 @@ if (args.config) {
   config = { glyphs: [] };
 }
 
-var glyphs;
+let glyphs;
 
 if (path.extname(args.src_font) === '.json') {
   glyphs = loadFontelloData(JSON.parse(data));
@@ -64,8 +64,8 @@ if (path.extname(args.src_font) === '.json') {
 }
 
 glyphs.forEach(function (glyph) {
-  var exists = null;
-  var glyphOut = {};
+  let exists = null;
+  let glyphOut = {};
 
   // Convert multibyte unicode char to number
   glyph.unicode = fixedCharCodeAt(glyph.unicode);
@@ -111,7 +111,7 @@ glyphs.forEach(function (glyph) {
 
   console.log((glyph.unicode.toString(16)) + ' - NEW glyph, writing...');
 
-  var filename;
+  let filename;
 
   if (args.names) {
     filename = glyph.name + '.svg';
