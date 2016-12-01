@@ -2,21 +2,20 @@
 
 'use strict';
 
-var fs      = require('fs');
-var path    = require('path');
-var crypto  = require('crypto');
-var _       = require('lodash');
-var yaml    = require('js-yaml');
+var fs = require('fs');
+var path = require('path');
+var crypto = require('crypto');
+var _ = require('lodash');
+var yaml = require('js-yaml');
 var SvgPath = require('svgpath');
-var XMLDOMParser    = require('xmldom').DOMParser;
-var ArgumentParser  = require('argparse').ArgumentParser;
+var XMLDOMParser = require('xmldom').DOMParser;
+var ArgumentParser = require('argparse').ArgumentParser;
 
-var svg_template = _.template(
+var svgTemplate = _.template(
     '<svg height="<%= height %>" width="<%= width %>" xmlns="http://www.w3.org/2000/svg">' +
     '<path d="<%= d %>" />' +
     '</svg>'
   );
-
 
 var parser = new ArgumentParser({
   version: require('./package.json').version,
@@ -27,24 +26,23 @@ parser.addArgument([ '-c', '--config' ], { help: 'Font config file' });
 parser.addArgument([ '-i', '--src_font' ], { help: 'Source font path', required: true });
 parser.addArgument([ '-o', '--glyphs_dir' ], { help: 'Glyphs output folder', required: true });
 parser.addArgument([ '-d', '--diff_config' ], { help: 'Difference config output file' });
-parser.addArgument([ '-f', '--force' ], { help: 'Force override glyphs from config', action: 'storeTrue'});
-parser.addArgument([ '-n', '--names' ], { help: 'Try to guess new glyphs names', action: 'storeTrue'});
+parser.addArgument([ '-f', '--force' ], { help: 'Force override glyphs from config', action: 'storeTrue' });
+parser.addArgument([ '-n', '--names' ], { help: 'Try to guess new glyphs names', action: 'storeTrue' });
 
 var args = parser.parseArgs();
 
-
-////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
 // Int to char, with fix for big numbers
 // see https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/String/fromCharCode
 //
-function fixedFromCharCode(code) {
-  /*jshint bitwise: false*/
+function fixedFromCharCode (code) {
+  /* jshint bitwise: false */
   if (code > 0xffff) {
     code -= 0x10000;
 
-    var surrogate1 = 0xd800 + (code >> 10)
-      , surrogate2 = 0xdc00 + (code & 0x3ff);
+    var surrogate1 = 0xd800 + (code >> 10);
+    var surrogate2 = 0xdc00 + (code & 0x3ff);
 
     return String.fromCharCode(surrogate1, surrogate2);
   } else {
@@ -53,10 +51,10 @@ function fixedFromCharCode(code) {
 }
 // Char to Int, with fix for big numbers
 //
-function fixedCharCodeAt(chr) {
-  /*jshint bitwise: false*/
-  var char1 = chr.charCodeAt(0)
-    , char2 = chr.charCodeAt(1);
+function fixedCharCodeAt (chr) {
+  /* jshint bitwise: false */
+  var char1 = chr.charCodeAt(0);
+  var char2 = chr.charCodeAt(1);
 
   if ((chr.length >= 2) &&
       ((char1 & 0xfc00) === 0xd800) &&
@@ -67,14 +65,12 @@ function fixedCharCodeAt(chr) {
   }
 }
 
-
 // Load glyphs data from SVG font
 //
-function load_svg_data(data) {
-
+function loadSvgData (data) {
   var result = [];
 
-  var xmlDoc = (new XMLDOMParser()).parseFromString(data, "application/xml");
+  var xmlDoc = (new XMLDOMParser()).parseFromString(data, 'application/xml');
 
   var svgFont = xmlDoc.getElementsByTagName('font')[0];
   var svgFontface = xmlDoc.getElementsByTagName('font-face')[0];
@@ -110,7 +106,7 @@ function load_svg_data(data) {
 
       unicode: unicode,
       name: name,
-      width: (width*scale).toFixed(1),
+      width: (width * scale).toFixed(1),
       height: 1000
     });
   });
@@ -118,22 +114,19 @@ function load_svg_data(data) {
   return result;
 }
 
-
 // Load glyphs data from fontello's config (custom icons only)
 //
-function load_fontello_data(data) {
-
+function loadFontelloData (data) {
   var result = [];
 
   _.each(data.glyphs, function (glyph) {
-
     // FIXME
     // Now just ignore glyphs without image, however
     // that can be space. Does anyone needs it?
     if (!(glyph.svg && glyph.svg.path)) { return; }
 
     result.push({
-      //d: glyph.svg.path,
+      // d: glyph.svg.path,
       d: new SvgPath(glyph.svg.path)
               .abs()
               .round(1)
@@ -153,10 +146,11 @@ function load_fontello_data(data) {
   return result;
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
-
-var data, config, diff = [];
+var data = null;
+var config = null;
+var diff = [];
 
 try {
   data = fs.readFileSync(args.src_font, 'utf-8');
@@ -176,28 +170,25 @@ if (args.config) {
   config = { glyphs: [] };
 }
 
-
 var glyphs;
 
 if (path.extname(args.src_font) === '.json') {
-  glyphs = load_fontello_data(JSON.parse(data));
+  glyphs = loadFontelloData(JSON.parse(data));
 } else {
-  glyphs = load_svg_data(data);
+  glyphs = loadSvgData(data);
 }
 
-
-glyphs.forEach(function(glyph) {
-
-  var exists,
-      glyph_out = {};
+glyphs.forEach(function (glyph) {
+  var exists = null;
+  var glyphOut = {};
 
   // Convert multibyte unicode char to number
   glyph.unicode = fixedCharCodeAt(glyph.unicode);
 
   // if got config from existing font, then write only missed files
   if (config) {
-    exists = _.find(config.glyphs, function(element) {
-      //console.log('---' + element.from + '---' + glyph.unicode)
+    exists = _.find(config.glyphs, function (element) {
+      // console.log('---' + element.from + '---' + glyph.unicode)
       return (element.from || element.code) === glyph.unicode;
     });
 
@@ -210,10 +201,10 @@ glyphs.forEach(function(glyph) {
   // Fix for FontForge: need space between old and new polyline
   glyph.d = glyph.d.replace(/zm/g, 'z m');
 
-  glyph.svg = svg_template({
-    d         : glyph.d,
-    width     : glyph.width,
-    height    : glyph.height
+  glyph.svg = svgTemplate({
+    d: glyph.d,
+    width: glyph.width,
+    height: glyph.height
   });
 
   if (exists) {
@@ -226,7 +217,7 @@ glyphs.forEach(function(glyph) {
 
   // Completely new glyph
 
-  glyph_out = {
+  glyphOut = {
     css: glyph.name,
     code: glyph.unicode,
     uid: glyph.uid || crypto.randomBytes(16).toString('hex'),
@@ -249,16 +240,14 @@ glyphs.forEach(function(glyph) {
 
   fs.writeFile(path.join(args.glyphs_dir, filename), glyph.svg);
 
-  diff.push(glyph_out);
-
+  diff.push(glyphOut);
 });
 
 // Create config template for new glyphs, if option set
 if (args.diff_config) {
-
   if (!diff.length) {
-    console.log("No new glyphs, skip writing diff");
-    return;
+    console.log('No new glyphs, skip writing diff');
+    process.exit(1);
   }
 
   fs.writeFileSync(
