@@ -6,10 +6,10 @@ This tool is used to dump SVG font into separate images.
 Installation
 -------
 ```bash
-// cli (normal usage)
+# cli (normal usage)
 npm install -g svg-font-dump
 
-// programmatically (advanced usage)
+# programmatically (advanced usage)
 npm install -S svg-font-dump
 ```
 
